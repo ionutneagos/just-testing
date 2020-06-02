@@ -79,7 +79,7 @@ namespace BootCamp.ShoppingCart.Api
 
                 var itemId = req.Query["itemId"];
 
-                log.LogInformation($"Delete ShoppingCartDelete is called, basket Id: {basketId}");
+                log.LogInformation($"Delete ShoppingCartDelete is called, basket Id: {itemId}");
 
                 await cartService.RemoveItemAsync(itemId);
 

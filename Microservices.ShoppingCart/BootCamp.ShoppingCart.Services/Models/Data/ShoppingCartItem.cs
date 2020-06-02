@@ -20,7 +20,6 @@ namespace BootCamp.ShoppingCart.Services.Models.Data
         {
             Quantity += quantity;
         }
-
         public void UpdateQuantity(int quantity)
         {
             Quantity = quantity;

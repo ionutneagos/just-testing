@@ -3,5 +3,6 @@
     public class GetCartRequest
     {
         public string CartId { get; set; }
+        public string UserId { get; set; }
     }
 }

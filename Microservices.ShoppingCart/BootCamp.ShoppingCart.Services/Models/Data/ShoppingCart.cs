@@ -8,13 +8,16 @@
 
     public class ShoppingCart : Entity
     {
+        public string UserId { get; private set; }
+
         [JsonProperty(PropertyName = "items")]
         private readonly List<ShoppingCartItem> Items;
 
         public DateTime DateUpdated { get; private set; }
 
-        public ShoppingCart()
+        public ShoppingCart(string userId)
         {
+            UserId = userId;
             Items = new List<ShoppingCartItem>();
         }
 
