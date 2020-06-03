@@ -1,8 +1,6 @@
-﻿
-
-namespace BootCamp.Inventory.Api
+﻿namespace BootCamp.Inventory.Api
 {
-    using BootCamp.Inventory.Services;
+    using BootCamp.Inventory.Services.Models.Data;
     using BootCamp.Inventory.Services.Models.Request;
     using Microservices.Shared;
     using Microservices.Shared.Exceptions;
@@ -10,31 +8,32 @@ namespace BootCamp.Inventory.Api
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Azure.WebJobs;
+    using Microsoft.Azure.WebJobs.Extensions.DurableTask;
     using Microsoft.Azure.WebJobs.Extensions.Http;
     using Microsoft.Extensions.Logging;
     using System;
     using System.Threading.Tasks;
 
-    public class ApiFunctions
+    public static class ApiFunctions
     {
-        private readonly IInventoryService inventoryService;
-
-        public ApiFunctions(IInventoryService inventoryService)
-        {
-            this.inventoryService = inventoryService;
-        }
 
         [FunctionName("StoreGet")]
-        public async Task<IActionResult> StoreGet([HttpTrigger(AuthorizationLevel.Function, "get", Route = "store")] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> StoreGet([HttpTrigger(AuthorizationLevel.Function, "get", Route = "store")] HttpRequest req, [DurableClient] IDurableClient client, ILogger log)
         {
             try
             {
-                log.LogInformation($"StoreGet for user is called");
+                log.LogInformation($"Store Get is called");
 
-                var items = await inventoryService.GetStoreAsync();
+                var catalogEntity = new EntityId(nameof(Inventory), Inventory.Id);
 
-                return new OkObjectResult(items);
+                var response = await client.ReadEntityStateAsync<Inventory>(catalogEntity);
+
+                if (!response.EntityExists)
+                    return new NotFoundResult();
+
+                return new OkObjectResult(response.EntityState.Items);
             }
+
             catch (Exception ex)
             {
                 return ex.GetResponse(log);
@@ -42,13 +41,19 @@ namespace BootCamp.Inventory.Api
         }
 
         [FunctionName("InventoryCreateItemPost")]
-        public async Task<IActionResult> InventoryCreateItemPost([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "store/inventory")] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> InventoryCreateItemPost([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "store/inventory")] HttpRequest req,
+            [DurableClient] IDurableClient client, ILogger log)
         {
             try
             {
                 log.LogInformation("InventoryCreateItemPost is called");
                 var request = await req.GetBodyAsync<CreateInventoryItemRequest>();
-                await inventoryService.CreateItemAsync(request);
+
+                var inventoryItem = new InventoryItem(description: request.Description, price: request.Price,
+                                                    availableStock: request.AvailableStock, restockThreshold: request.RestockThreshold, maxStockThreshold: request.MaxStockThreshold);
+
+                await client.SignalEntityAsync<IInventory>(Inventory.Id, x => x.CreateItemAsync(inventoryItem));
+
                 return new OkObjectResult(request);
             }
             catch (Exception ex)
@@ -58,7 +63,8 @@ namespace BootCamp.Inventory.Api
         }
 
         [FunctionName("InventoryAddItemStockPut")]
-        public IActionResult InventoryAddItemStockPut([HttpTrigger(AuthorizationLevel.Function, "PUT", Route = "store/inventory/{itemId}")] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> InventoryAddItemStockPutAsync([HttpTrigger(AuthorizationLevel.Function, "PUT", Route = "store/inventory/{itemId}")] HttpRequest req,
+            [DurableClient] IDurableClient client, ILogger log)
         {
             try
             {
@@ -67,10 +73,11 @@ namespace BootCamp.Inventory.Api
                     throw new AppException(400, "Item Id is missing from query");
 
                 var itemId = req.Query["itemId"];
+                var quantity =Convert.ToInt32(req.Query["quantity"]);
 
                 log.LogInformation($"Delete ShoppingCartDelete is called, basket Id: {itemId}");
 
-                inventoryService.AddStock(itemId);
+                await client.SignalEntityAsync<IInventory>(Inventory.Id, x => x.AddStock(itemId, quantity));
 
                 return new OkResult();
             }

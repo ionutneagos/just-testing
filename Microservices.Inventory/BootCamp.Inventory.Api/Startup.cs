@@ -1,6 +1,5 @@
 ﻿namespace BootCamp.Inventory.Api
 {
-    using BootCamp.Inventory.Services;
     using Microsoft.Azure.Functions.Extensions.DependencyInjection;
     using Microsoft.Azure.WebJobs.Host.Bindings;
     using Microsoft.Extensions.Configuration;
@@ -21,8 +20,6 @@
                                                    .Build();
             //TO DO
             //Add CosmosDb. This verifies database and collections existence.
-
-            builder.Services.AddScoped<IInventoryService, InventoryService>();
         }
     }
 }

@@ -7,7 +7,8 @@ namespace BootCamp.Inventory.Services.Models.Data
     public class InventoryItem : Entity
     {
         public InventoryItem(
-           string description, decimal price, int availableStock, int restockThreshold, int maxStockThreshold, string id = null,
+           string description, decimal price, int availableStock, int restockThreshold, int maxStockThreshold,
+           string id = null,
            bool onReorder = false)
         {
             this.Id = id ?? Guid.NewGuid().ToString();
