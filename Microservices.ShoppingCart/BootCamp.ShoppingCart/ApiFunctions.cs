@@ -25,7 +25,7 @@ namespace BootCamp.ShoppingCart.Api
         }
 
         [FunctionName("ShoppingCartGet")]
-        public async Task<IActionResult> ShoppingCartGet([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req, ILogger log)
+        public async Task<IActionResult> ShoppingCartGet([HttpTrigger(AuthorizationLevel.Function, "get", Route = "user/{userId}/shoppingCart")] HttpRequest req, ILogger log)
         {
             try
             {
@@ -47,7 +47,7 @@ namespace BootCamp.ShoppingCart.Api
         }
 
         [FunctionName("ShoppingCartPost")]
-        public async Task<IActionResult> ShoppingCartPost([HttpTrigger(AuthorizationLevel.Function, "POST", Route = null)] HttpRequest req, ILogger log)
+        public async Task<IActionResult> ShoppingCartPost([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "user/{userId}/shoppingCart/{itemId}")] HttpRequest req, ILogger log)
         {
             try
             {
@@ -66,9 +66,8 @@ namespace BootCamp.ShoppingCart.Api
             }
         }
 
-
         [FunctionName("ShoppingCartDelete")]
-        public async Task<IActionResult> ShoppingCartDelete([HttpTrigger(AuthorizationLevel.Function, "delete", Route = null)] HttpRequest req, ILogger log)
+        public async Task<IActionResult> ShoppingCartDelete([HttpTrigger(AuthorizationLevel.Function, "delete", Route = "user/{userId}/shoppingCart/{itemId}")] HttpRequest req, ILogger log)
         {
             try
             {
