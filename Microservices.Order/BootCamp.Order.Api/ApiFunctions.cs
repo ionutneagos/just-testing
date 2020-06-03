@@ -50,7 +50,7 @@
                 if (!req.Query.ContainsKey("userId"))
                     throw new AppException(400, "User Id is missing from query");
 
-                await orderService.OrderCheckout(req.Query["userId"];
+                await orderService.OrderCheckout(req.Query["userId"]);
 
                 return new OkResult();
             }
