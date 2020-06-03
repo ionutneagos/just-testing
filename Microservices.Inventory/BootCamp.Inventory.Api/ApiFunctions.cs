@@ -54,7 +54,7 @@
 
                 await client.SignalEntityAsync<IInventory>(Inventory.Id, x => x.CreateItemAsync(inventoryItem));
 
-                return new OkObjectResult(request);
+                return new OkResult();
             }
             catch (Exception ex)
             {

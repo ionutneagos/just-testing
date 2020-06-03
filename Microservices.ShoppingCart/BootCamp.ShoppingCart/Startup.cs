@@ -1,6 +1,5 @@
 ﻿namespace BootCamp.ShoppingCart.Api
 {
-    using BootCamp.ShoppingCart.Services;
     using Microsoft.Azure.Functions.Extensions.DependencyInjection;
     using Microsoft.Azure.WebJobs.Host.Bindings;
     using Microsoft.Extensions.Configuration;
@@ -20,9 +19,8 @@
                                                    .AddEnvironmentVariables()
                                                    .Build();
             //TO DO
-            //Add CosmosDb. This verifies database and collections existence.
+            //Add inject services
 
-            builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>();
         }
     }
 }
