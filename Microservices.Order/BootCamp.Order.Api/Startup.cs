@@ -1,6 +1,5 @@
 ﻿namespace BootCamp.Order.Api
 {
-    using BootCamp.Order.Services;
     using Microsoft.Azure.Functions.Extensions.DependencyInjection;
     using Microsoft.Azure.WebJobs.Host.Bindings;
     using Microsoft.Extensions.Configuration;
@@ -20,9 +19,7 @@
                                                    .AddEnvironmentVariables()
                                                    .Build();
             //TO DO
-            //Inject DB Persistence if needed. This verifies 
-
-            builder.Services.AddScoped<IOrderService, OrderService>();
+            //Add inject services
         }
     }
 }

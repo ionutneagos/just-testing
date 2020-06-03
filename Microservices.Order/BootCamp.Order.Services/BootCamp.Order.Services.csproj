@@ -6,7 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Models\Response\" />
+    <Compile Remove="Models\Response\**" />
+    <EmbeddedResource Remove="Models\Response\**" />
+    <None Remove="Models\Response\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.DurableTask" Version="2.2.2" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,27 +1,48 @@
 ﻿namespace BootCamp.Order.Api
 {
-    using BootCamp.Order.Services;
     using Microservices.Shared;
     using Microservices.Shared.Exceptions;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Azure.WebJobs;
+    using Microsoft.Azure.WebJobs.Extensions.DurableTask;
     using Microsoft.Azure.WebJobs.Extensions.Http;
     using Microsoft.Extensions.Logging;
     using System;
     using System.Threading.Tasks;
 
-    public class ApiFunctions
+    public static class ApiFunctions
     {
-        private readonly IOrderService orderService;
 
-        public ApiFunctions(IOrderService orderService)
+        [FunctionName("OrderGetAll")]
+        public static async Task<IActionResult> OrderGetAll([HttpTrigger(AuthorizationLevel.Function, "get", Route = "user/{userId}/order")] HttpRequest req, 
+            [DurableClient] IDurableClient client, ILogger log)
         {
-            this.orderService = orderService;
+            try
+            {
+                log.LogInformation($"Order Get is called");
+
+                if (!req.Query.ContainsKey("userId"))
+                    throw new AppException(400, "User Id is missing from query");
+
+                var orderEntity = new EntityId(nameof(Order), req.Query["userId"]);
+
+                var response = await client.ReadEntityStateAsync<Order>(orderEntity);
+                if (!response.EntityExists)
+                    return new NotFoundResult();
+
+                return new OkObjectResult(response.EntityState.Items);
+
+            }
+            catch (Exception ex)
+            {
+                return ex.GetResponse(log);
+            }
         }
 
         [FunctionName("OrderGet")]
-        public async Task<IActionResult> OrderGet([HttpTrigger(AuthorizationLevel.Function, "get", Route = "user/{userId}/order/{orderId}")] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> OrderGet([HttpTrigger(AuthorizationLevel.Function, "get", Route = "user/{userId}/order/{orderId}")] HttpRequest req,
+           [DurableClient] IDurableClient client, ILogger log)
         {
             try
             {
@@ -32,8 +53,19 @@
 
                 if (!req.Query.ContainsKey("orderId"))
                     throw new AppException(400, "Order Id is missing from query");
+              
+                var orderEntity = new EntityId(nameof(Order), req.Query["userId"]);
 
-                return new OkObjectResult(await orderService.GetOrderAsync(req.Query["userId"], req.Query["orderId"]));
+                var response = await client.ReadEntityStateAsync<IOrder>(orderEntity);
+                if (!response.EntityExists)
+                    return new NotFoundResult();
+                
+                var order = response.EntityState.OrderGet(req.Query["orderId"]);
+               
+                if (order == null)
+                    return new NotFoundResult();
+                else
+                    return new OkObjectResult(order);
             }
             catch (Exception ex)
             {
@@ -41,8 +73,9 @@
             }
         }
 
+
         [FunctionName("OrderCheckoutPost")]
-        public async Task<IActionResult> OrderCheckoutPost([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "user/{userId}/order/checkout")] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> OrderCheckoutPost([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "user/{userId}/order/checkout")] HttpRequest req, [DurableClient] IDurableClient client, ILogger log)
         {
             try
             {
@@ -50,9 +83,10 @@
                 if (!req.Query.ContainsKey("userId"))
                     throw new AppException(400, "User Id is missing from query");
 
-                await orderService.OrderCheckout(req.Query["userId"]);
+                await client.SignalEntityAsync<IOrder>(req.Query["userId"], x => x.Checkout());
 
                 return new OkResult();
+
             }
             catch (Exception ex)
             {
